@@ -1,0 +1,98 @@
+#include <ESP8266WiFi.h>
+
+// Pin Definitions
+#define GATE_SENSOR D1
+#define SLOT1_SENSOR D2
+#define SLOT2_SENSOR D3
+#define SLOT3_SENSOR D4
+
+#define SLOT1_LED D5
+#define SLOT2_LED D6
+#define SLOT3_LED D7
+
+// Timers
+unsigned long slot1Start = 0;
+unsigned long slot2Start = 0;
+unsigned long slot3Start = 0;
+
+bool slot1Occupied = false;
+bool slot2Occupied = false;
+bool slot3Occupied = false;
+
+void setup() {
+  Serial.begin(9600);
+
+  pinMode(GATE_SENSOR, INPUT);
+  pinMode(SLOT1_SENSOR, INPUT);
+  pinMode(SLOT2_SENSOR, INPUT);
+  pinMode(SLOT3_SENSOR, INPUT);
+
+  pinMode(SLOT1_LED, OUTPUT);
+  pinMode(SLOT2_LED, OUTPUT);
+  pinMode(SLOT3_LED, OUTPUT);
+
+  digitalWrite(SLOT1_LED, LOW);
+  digitalWrite(SLOT2_LED, LOW);
+  digitalWrite(SLOT3_LED, LOW);
+}
+
+void loop() {
+  // Read IR sensors
+  int gateIR = digitalRead(GATE_SENSOR);
+  int s1 = digitalRead(SLOT1_SENSOR);
+  int s2 = digitalRead(SLOT2_SENSOR);
+  int s3 = digitalRead(SLOT3_SENSOR);
+
+  // Entry detection
+  if (gateIR == LOW) {
+    Serial.println("Vehicle entered!");
+    delay(2000); // debounce delay
+  }
+
+  // SLOT 1
+  if (s1 == LOW && !slot1Occupied) {
+    slot1Start = millis();
+    slot1Occupied = true;
+    digitalWrite(SLOT1_LED, HIGH);
+    Serial.println("Slot 1 Occupied");
+  } else if (s1 == HIGH && slot1Occupied) {
+    unsigned long duration = (millis() - slot1Start) / 1000;
+    Serial.print("Slot 1 Freed. Time occupied: ");
+    Serial.print(duration);
+    Serial.println(" seconds");
+    slot1Occupied = false;
+    digitalWrite(SLOT1_LED, LOW);
+  }
+
+  // SLOT 2
+  if (s2 == LOW && !slot2Occupied) {
+    slot2Start = millis();
+    slot2Occupied = true;
+    digitalWrite(SLOT2_LED, HIGH);
+    Serial.println("Slot 2 Occupied");
+  } else if (s2 == HIGH && slot2Occupied) {
+    unsigned long duration = (millis() - slot2Start) / 1000;
+    Serial.print("Slot 2 Freed. Time occupied: ");
+    Serial.print(duration);
+    Serial.println(" seconds");
+    slot2Occupied = false;
+    digitalWrite(SLOT2_LED, LOW);
+  }
+
+  // SLOT 3
+  if (s3 == LOW && !slot3Occupied) {
+    slot3Start = millis();
+    slot3Occupied = true;
+    digitalWrite(SLOT3_LED, HIGH);
+    Serial.println("Slot 3 Occupied");
+  } else if (s3 == HIGH && slot3Occupied) {
+    unsigned long duration = (millis() - slot3Start) / 1000;
+    Serial.print("Slot 3 Freed. Time occupied: ");
+    Serial.print(duration);
+    Serial.println(" seconds");
+    slot3Occupied = false;
+    digitalWrite(SLOT3_LED, LOW);
+  }
+
+  delay(500); // avoid flooding the serial output
+}
